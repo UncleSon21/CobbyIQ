@@ -25,8 +25,8 @@ export default function RegisterPage() {
       const res = await authApi.register({
         company_name: form.company_name,
         admin_name: form.admin_name,
-        email: form.admin_email,
-        password: form.admin_password,
+        admin_email: form.admin_email,
+        admin_password: form.admin_password,
       });
       const { access_token, role, workspace_id, name, email } = res.data;
       setAuth(access_token, { id: workspace_id, email, name, role, workspace_id });
