@@ -211,7 +211,7 @@ export default function DashboardPage() {
               <Sparkles size={15} style={{ color: "var(--color-amber)" }} />
             </div>
             <div>
-              <p className="font-display text-base leading-tight" style={{ color: "white" }}>OnboardIQ</p>
+              <p className="font-display text-base leading-tight" style={{ color: "white" }}>CobbyIQ</p>
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>HR Dashboard</p>
             </div>
           </div>

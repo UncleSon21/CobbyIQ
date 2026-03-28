@@ -1,290 +1,1004 @@
 "use client";
-
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+// ─── Stellar Config ────────────────────────────────────────────────────────
+const COLORS = {
+  void: "#04080F",
+  deep: "#08112A",
+  nebula: "#0D1B3E",
+  gold: "#C9A84C",
+  goldLight: "#E5C678",
+  goldMuted: "rgba(201,168,76,0.15)",
+  starWhite: "#F0EDE4",
+  dim: "#A8A49C",
+  faint: "#5C5A54",
+  accent: "#3B7BF7",
+};
 
-export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
+// ─── Star Field Canvas ─────────────────────────────────────────────────────
+function StarField() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const starsRef = useRef([]);
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const frameRef = useRef(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let w = (canvas.width = window.innerWidth);
+    let h = (canvas.height = window.innerHeight * 3);
+
+    // Generate stars
+    const stars = [];
+    for (let i = 0; i < 300; i++) {
+      stars.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.5 + 0.3,
+        speed: Math.random() * 0.3 + 0.05,
+        phase: Math.random() * Math.PI * 2,
+        brightness: Math.random() * 0.5 + 0.5,
+      });
+    }
+    starsRef.current = stars;
+
+    // Shooting stars
+    const shootingStars = [];
+    const spawnShootingStar = () => {
+      shootingStars.push({
+        x: Math.random() * w * 0.7,
+        y: Math.random() * h * 0.3,
+        len: Math.random() * 80 + 40,
+        speed: Math.random() * 8 + 6,
+        angle: (Math.PI / 6) + Math.random() * 0.3,
+        life: 1,
+        decay: Math.random() * 0.015 + 0.008,
+      });
+    };
+
+    let shootInterval = setInterval(() => {
+      if (Math.random() > 0.4) spawnShootingStar();
+    }, 3000);
+
+    const animate = () => {
+      ctx.clearRect(0, 0, w, h);
+      const t = Date.now() * 0.001;
+
+      // Draw stars
+      stars.forEach((s) => {
+        const twinkle = Math.sin(t * s.speed * 3 + s.phase) * 0.3 + 0.7;
+        const alpha = s.brightness * twinkle;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(240,237,228,${alpha})`;
+        ctx.fill();
+        if (s.r > 1.2) {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(201,168,76,${alpha * 0.08})`;
+          ctx.fill();
+        }
+      });
+
+      // Draw shooting stars
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const ss = shootingStars[i];
+        ss.x += Math.cos(ss.angle) * ss.speed;
+        ss.y += Math.sin(ss.angle) * ss.speed;
+        ss.life -= ss.decay;
+        if (ss.life <= 0) { shootingStars.splice(i, 1); continue; }
+        const grad = ctx.createLinearGradient(
+          ss.x, ss.y,
+          ss.x - Math.cos(ss.angle) * ss.len,
+          ss.y - Math.sin(ss.angle) * ss.len
+        );
+        grad.addColorStop(0, `rgba(201,168,76,${ss.life})`);
+        grad.addColorStop(1, `rgba(201,168,76,0)`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(
+          ss.x - Math.cos(ss.angle) * ss.len,
+          ss.y - Math.sin(ss.angle) * ss.len
+        );
+        ctx.stroke();
+      }
+
+      frameRef.current = requestAnimationFrame(animate);
+    };
+    animate();
+
+    const handleResize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight * 3;
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+      clearInterval(shootInterval);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   return (
-    <main style={{ background: "#08112A", color: "#F0EDE4", fontFamily: "'Sora', sans-serif", overflowX: "hidden" }}>
-
-      {/* ── Nav ── */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        padding: "0 2rem",
-        height: "64px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: scrolled ? "rgba(8,17,42,0.92)" : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(201,168,76,0.15)" : "none",
-        transition: "all 0.3s ease",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <HexLogo />
-          <span style={{ fontFamily: "'Instrument Serif', serif", fontSize: "1.25rem", color: "#F0EDE4", letterSpacing: "0.02em" }}>
-            Cobby<span style={{ color: "#C9A84C" }}>IQ</span>
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <Link href="/login" style={{ color: "#A8A49C", fontSize: "0.875rem", textDecoration: "none", transition: "color 0.2s" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE4")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#A8A49C")}>
-            Sign in
-          </Link>
-          <Link href="/register" style={{
-            background: "#C9A84C", color: "#08112A", fontSize: "0.875rem", fontWeight: 600,
-            padding: "0.5rem 1.25rem", borderRadius: "6px", textDecoration: "none",
-            transition: "background 0.2s",
-          }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#E5C678")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#C9A84C")}>
-            Get started
-          </Link>
-        </div>
-      </nav>
-
-      {/* ── Hero ── */}
-      <section ref={heroRef} style={{
-        minHeight: "100vh", display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        padding: "8rem 2rem 4rem",
-        position: "relative", textAlign: "center",
-      }}>
-        {/* Background hex grid */}
-        <div style={{ position: "absolute", inset: 0, overflow: "hidden", opacity: 0.06, pointerEvents: "none" }}>
-          <HexGrid />
-        </div>
-
-        {/* Glow */}
-        <div style={{
-          position: "absolute", top: "30%", left: "50%", transform: "translate(-50%, -50%)",
-          width: "600px", height: "600px", borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-
-        <div style={{ position: "relative", maxWidth: "800px" }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: "8px",
-            background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)",
-            borderRadius: "100px", padding: "0.35rem 1rem", marginBottom: "2rem",
-            fontSize: "0.8rem", color: "#C9A84C", letterSpacing: "0.08em", textTransform: "uppercase",
-          }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", display: "inline-block" }} />
-            Intelligent Onboarding
-          </div>
-
-          <h1 style={{
-            fontFamily: "'Instrument Serif', serif",
-            fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
-            fontWeight: 400, lineHeight: 1.1,
-            margin: "0 0 1.5rem",
-            color: "#F0EDE4",
-          }}>
-            Onboard smarter.<br />
-            <span style={{ color: "#C9A84C" }}>Answer faster.</span>
-          </h1>
-
-          <p style={{
-            fontSize: "1.125rem", color: "#A8A49C", lineHeight: 1.7,
-            maxWidth: "560px", margin: "0 auto 2.5rem",
-          }}>
-            CobbyIQ turns your company documents into an AI-powered knowledge base — so new hires get answers instantly, not days later.
-          </p>
-
-          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" style={{
-              background: "#C9A84C", color: "#08112A", fontWeight: 700,
-              padding: "0.875rem 2rem", borderRadius: "8px", textDecoration: "none",
-              fontSize: "0.95rem", transition: "all 0.2s",
-              boxShadow: "0 0 24px rgba(201,168,76,0.25)",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#E5C678"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#C9A84C"; e.currentTarget.style.transform = "translateY(0)"; }}>
-              Start for free
-            </Link>
-            <Link href="/login" style={{
-              background: "transparent", color: "#F0EDE4",
-              border: "1px solid rgba(240,237,228,0.2)",
-              padding: "0.875rem 2rem", borderRadius: "8px", textDecoration: "none",
-              fontSize: "0.95rem", transition: "all 0.2s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(240,237,228,0.5)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(240,237,228,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-              Sign in →
-            </Link>
-          </div>
-
-          <p style={{ fontSize: "0.8rem", color: "#5C5A54", marginTop: "1.5rem" }}>
-            No credit card required · Setup in minutes
-          </p>
-        </div>
-
-        {/* Scroll indicator */}
-        <div style={{
-          position: "absolute", bottom: "2rem", left: "50%", transform: "translateX(-50%)",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: "8px",
-          color: "#5C5A54", fontSize: "0.75rem", letterSpacing: "0.1em",
-          animation: "bounce 2s infinite",
-        }}>
-          <span>SCROLL</span>
-          <div style={{ width: "1px", height: "40px", background: "linear-gradient(to bottom, #5C5A54, transparent)" }} />
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section style={{ padding: "6rem 2rem", maxWidth: "1100px", margin: "0 auto" }}>
-        <SectionLabel>How it works</SectionLabel>
-        <h2 style={{
-          fontFamily: "'Instrument Serif', serif", fontSize: "clamp(2rem, 4vw, 3rem)",
-          fontWeight: 400, margin: "1rem 0 4rem", color: "#F0EDE4",
-        }}>
-          Three steps to smarter onboarding
-        </h2>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
-          {[
-            { step: "01", title: "Upload your docs", desc: "Import PDFs, policies, handbooks, and SOPs. CobbyIQ ingests and indexes everything automatically." },
-            { step: "02", title: "AI builds the brain", desc: "Our RAG pipeline processes your documents into a searchable, context-aware knowledge base." },
-            { step: "03", title: "New hires ask away", desc: "Employees get instant, accurate answers from your actual company knowledge — 24/7, no manager needed." },
-          ].map((item) => (
-            <div key={item.step} style={{
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: "12px", padding: "2rem",
-              transition: "border-color 0.3s, transform 0.3s",
-            }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(201,168,76,0.3)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}>
-              <div style={{
-                fontFamily: "'Instrument Serif', serif", fontSize: "3rem",
-                color: "rgba(201,168,76,0.2)", lineHeight: 1, marginBottom: "1rem",
-              }}>{item.step}</div>
-              <h3 style={{ fontSize: "1.125rem", fontWeight: 600, margin: "0 0 0.75rem", color: "#F0EDE4" }}>{item.title}</h3>
-              <p style={{ fontSize: "0.9rem", color: "#A8A49C", lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section style={{ padding: "6rem 2rem", background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <SectionLabel>Features</SectionLabel>
-          <h2 style={{
-            fontFamily: "'Instrument Serif', serif", fontSize: "clamp(2rem, 4vw, 3rem)",
-            fontWeight: 400, margin: "1rem 0 4rem", color: "#F0EDE4",
-          }}>
-            Everything your team needs
-          </h2>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
-            {[
-              { icon: "◈", title: "RAG-powered answers", desc: "Responses grounded in your actual documents, not hallucinations." },
-              { icon: "◎", title: "Role-based access", desc: "Admins manage knowledge. Employees access what they need." },
-              { icon: "◉", title: "Multi-format upload", desc: "PDFs, Word docs, policies — all supported out of the box." },
-              { icon: "◆", title: "Analytics dashboard", desc: "See what your team is asking and identify knowledge gaps." },
-              { icon: "◇", title: "Instant setup", desc: "Go from zero to deployed in under 10 minutes." },
-              { icon: "○", title: "Built for small teams", desc: "Designed for companies with 20–150 employees." },
-            ].map((f) => (
-              <div key={f.title} style={{ padding: "1.5rem" }}>
-                <div style={{ fontSize: "1.5rem", color: "#C9A84C", marginBottom: "0.75rem" }}>{f.icon}</div>
-                <h4 style={{ fontSize: "0.95rem", fontWeight: 600, margin: "0 0 0.5rem", color: "#F0EDE4" }}>{f.title}</h4>
-                <p style={{ fontSize: "0.85rem", color: "#A8A49C", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section style={{ padding: "8rem 2rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{
-          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-          width: "500px", height: "500px", borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative", maxWidth: "600px", margin: "0 auto" }}>
-          <h2 style={{
-            fontFamily: "'Instrument Serif', serif", fontSize: "clamp(2rem, 5vw, 3.5rem)",
-            fontWeight: 400, margin: "0 0 1.5rem", color: "#F0EDE4", lineHeight: 1.15,
-          }}>
-            Ready to transform your onboarding?
-          </h2>
-          <p style={{ color: "#A8A49C", fontSize: "1rem", marginBottom: "2.5rem", lineHeight: 1.7 }}>
-            Join forward-thinking companies using CobbyIQ to onboard smarter and retain knowledge better.
-          </p>
-          <Link href="/register" style={{
-            background: "#C9A84C", color: "#08112A", fontWeight: 700,
-            padding: "1rem 2.5rem", borderRadius: "8px", textDecoration: "none",
-            fontSize: "1rem", transition: "all 0.2s", display: "inline-block",
-            boxShadow: "0 0 32px rgba(201,168,76,0.3)",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#E5C678"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "#C9A84C"; e.currentTarget.style.transform = "translateY(0)"; }}>
-            Get started for free
-          </Link>
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer style={{
-        borderTop: "1px solid rgba(255,255,255,0.07)",
-        padding: "2rem", textAlign: "center",
-        color: "#5C5A54", fontSize: "0.8rem",
-        display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem",
-      }}>
-        <HexLogo size={16} />
-        <span>© 2026 CobbyIQ. Intelligent Onboarding.</span>
-      </footer>
-
-      <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(6px); }
-        }
-      `}</style>
-    </main>
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "fixed",
+        top: 0, left: 0,
+        width: "100%",
+        height: "300vh",
+        pointerEvents: "none",
+        zIndex: 0,
+      }}
+    />
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+// ─── Intersection Observer Hook ────────────────────────────────────────────
+function useReveal(threshold = 0.15) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return [ref, visible];
+}
+
+// ─── Animated Counter ──────────────────────────────────────────────────────
+function Counter({ end, suffix = "", duration = 2000 }) {
+  const [val, setVal] = useState(0);
+  const [ref, visible] = useReveal();
+  useEffect(() => {
+    if (!visible) return;
+    let start = 0;
+    const step = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= end) { setVal(end); clearInterval(timer); }
+      else setVal(Math.floor(start));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [visible, end, duration]);
+  return <span ref={ref}>{val}{suffix}</span>;
+}
+
+// ─── Floating Orb ──────────────────────────────────────────────────────────
+function Orb({ size, top, left, delay = 0, color = COLORS.gold }) {
   return (
     <div style={{
-      fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase",
-      color: "#C9A84C", fontWeight: 600,
-    }}>
-      {children}
-    </div>
+      position: "absolute", top, left, width: size, height: size,
+      borderRadius: "50%",
+      background: `radial-gradient(circle, ${color}22 0%, transparent 70%)`,
+      animation: `orbFloat 8s ease-in-out ${delay}s infinite alternate`,
+      pointerEvents: "none",
+    }} />
   );
 }
 
-function HexLogo({ size = 28 }: { size?: number }) {
+// ─── Hex Logo ──────────────────────────────────────────────────────────────
+function HexLogo({ size = 32 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
-      <polygon points="14,2 25,8 25,20 14,26 3,20 3,8" fill="#C9A84C" opacity="0.9" />
-      <polygon points="14,6 22,10.5 22,19.5 14,24 6,19.5 6,10.5" fill="#08112A" />
-      <polygon points="14,10 18,12.5 18,17.5 14,20 10,17.5 10,12.5" fill="#C9A84C" opacity="0.6" />
+      <polygon points="14,2 25,8 25,20 14,26 3,20 3,8" fill={COLORS.gold} opacity="0.9" />
+      <polygon points="14,6 22,10.5 22,19.5 14,24 6,19.5 6,10.5" fill={COLORS.deep} />
+      <polygon points="14,10 18,12.5 18,17.5 14,20 10,17.5 10,12.5" fill={COLORS.gold} opacity="0.6" />
     </svg>
   );
 }
 
-function HexGrid() {
-  const hexes = [];
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 12; col++) {
-      const x = col * 80 + (row % 2 === 0 ? 0 : 40);
-      const y = row * 70;
-      hexes.push(<polygon key={`${row}-${col}`} points={`${x+30},${y} ${x+60},${y+17} ${x+60},${y+51} ${x+30},${y+68} ${x},${y+51} ${x},${y+17}`} fill="none" stroke="#C9A84C" strokeWidth="1" />);
-    }
-  }
-  return <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>{hexes}</svg>;
+// ─── Product Showcase (Animated Mock UI) ───────────────────────────────────
+function ProductShowcase() {
+  const [ref, visible] = useReveal(0.1);
+  const [activeTab, setActiveTab] = useState(0);
+  const [typedText, setTypedText] = useState("");
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [answerText, setAnswerText] = useState("");
+
+  const query = "What's our remote work policy?";
+  const answer = "Based on your company handbook (updated Jan 2026), employees may work remotely up to 3 days per week. Manager approval is required for full-remote arrangements exceeding 2 consecutive weeks. All remote workers must be available during core hours (10am–3pm local time).";
+
+  useEffect(() => {
+    if (!visible) return;
+    let i = 0;
+    setTypedText("");
+    setShowAnswer(false);
+    setAnswerText("");
+    const typeQuery = setInterval(() => {
+      i++;
+      setTypedText(query.slice(0, i));
+      if (i >= query.length) {
+        clearInterval(typeQuery);
+        setTimeout(() => {
+          setShowAnswer(true);
+          let j = 0;
+          const typeAnswer = setInterval(() => {
+            j++;
+            setAnswerText(answer.slice(0, j));
+            if (j >= answer.length) clearInterval(typeAnswer);
+          }, 12);
+        }, 600);
+      }
+    }, 50);
+    return () => clearInterval(typeQuery);
+  }, [visible]);
+
+  return (
+    <div ref={ref} style={{
+      perspective: "1200px",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(60px)",
+      transition: "all 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+    }}>
+      <div style={{
+        background: `linear-gradient(145deg, ${COLORS.deep}, ${COLORS.nebula})`,
+        border: `1px solid rgba(201,168,76,0.15)`,
+        borderRadius: "16px",
+        overflow: "hidden",
+        boxShadow: `0 40px 100px rgba(0,0,0,0.5), 0 0 80px rgba(201,168,76,0.06), inset 0 1px 0 rgba(255,255,255,0.05)`,
+        transform: visible ? "rotateX(2deg)" : "rotateX(8deg)",
+        transition: "transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)",
+        maxWidth: "900px",
+        margin: "0 auto",
+      }}>
+        {/* Title bar */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "14px 20px",
+          background: "rgba(0,0,0,0.3)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}>
+          <div style={{ display: "flex", gap: "6px" }}>
+            {["#ff5f57","#febc2e","#28c840"].map(c => (
+              <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.8 }} />
+            ))}
+          </div>
+          <div style={{
+            flex: 1, textAlign: "center", fontSize: "12px", color: COLORS.faint,
+            fontFamily: "'SF Mono', 'Fira Code', monospace",
+          }}>
+            cobbyiq.com/workspace/knowledge
+          </div>
+        </div>
+
+        {/* App layout */}
+        <div style={{ display: "flex", minHeight: "380px" }}>
+          {/* Sidebar */}
+          <div style={{
+            width: "200px", padding: "16px",
+            borderRight: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(0,0,0,0.15)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+              <HexLogo size={20} />
+              <span style={{ fontWeight: 700, fontSize: "14px", color: COLORS.starWhite }}>
+                Cobby<span style={{ color: COLORS.gold }}>IQ</span>
+              </span>
+            </div>
+            {["Ask CobbyIQ", "Documents", "Analytics", "Team", "Settings"].map((item, i) => (
+              <div
+                key={item}
+                onClick={() => setActiveTab(i)}
+                style={{
+                  padding: "8px 12px", borderRadius: "8px", fontSize: "13px",
+                  cursor: "pointer", marginBottom: "4px",
+                  color: i === activeTab ? COLORS.gold : COLORS.dim,
+                  background: i === activeTab ? COLORS.goldMuted : "transparent",
+                  transition: "all 0.2s",
+                  fontWeight: i === activeTab ? 600 : 400,
+                  display: "flex", alignItems: "center", gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "14px" }}>
+                  {["✦", "◆", "◎", "◇", "○"][i]}
+                </span>
+                {item}
+              </div>
+            ))}
+          </div>
+
+          {/* Main content */}
+          <div style={{ flex: 1, padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{
+              fontSize: "18px", fontWeight: 600, color: COLORS.starWhite,
+              margin: "0 0 20px", fontFamily: "'Instrument Serif', Georgia, serif",
+            }}>
+              ✦ Ask CobbyIQ
+            </h3>
+
+            {/* Chat area */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* User query */}
+              <div style={{
+                alignSelf: "flex-end", maxWidth: "70%",
+                background: COLORS.goldMuted,
+                border: `1px solid rgba(201,168,76,0.2)`,
+                borderRadius: "14px 14px 4px 14px",
+                padding: "12px 16px",
+                fontSize: "13px", color: COLORS.starWhite,
+                lineHeight: 1.5,
+              }}>
+                {typedText}
+                <span style={{
+                  display: "inline-block", width: "2px", height: "14px",
+                  background: COLORS.gold, marginLeft: "2px",
+                  animation: "blink 0.8s infinite",
+                  verticalAlign: "text-bottom",
+                  opacity: typedText.length < query.length ? 1 : 0,
+                }} />
+              </div>
+
+              {/* AI answer */}
+              {showAnswer && (
+                <div style={{
+                  alignSelf: "flex-start", maxWidth: "80%",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "14px 14px 14px 4px",
+                  padding: "14px 18px",
+                  fontSize: "13px", color: COLORS.dim,
+                  lineHeight: 1.7,
+                  animation: "slideUp 0.4s ease-out",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                    <HexLogo size={16} />
+                    <span style={{ fontSize: "11px", color: COLORS.gold, fontWeight: 600 }}>CobbyIQ</span>
+                    <span style={{
+                      fontSize: "10px", color: COLORS.faint,
+                      background: "rgba(201,168,76,0.1)",
+                      padding: "2px 8px", borderRadius: "100px",
+                    }}>
+                      sourced from 3 documents
+                    </span>
+                  </div>
+                  {answerText}
+                </div>
+              )}
+            </div>
+
+            {/* Input bar */}
+            <div style={{
+              marginTop: "16px",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "12px",
+              padding: "12px 16px",
+              display: "flex", alignItems: "center", gap: "12px",
+              fontSize: "13px", color: COLORS.faint,
+            }}>
+              <span>Ask anything about your company...</span>
+              <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
+                <div style={{
+                  width: "28px", height: "28px", borderRadius: "8px",
+                  background: COLORS.gold, display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "14px", color: COLORS.deep,
+                }}>↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Feature Card ──────────────────────────────────────────────────────────
+function FeatureCard({ icon, title, desc, delay, index }) {
+  const [ref, visible] = useReveal(0.1);
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered
+          ? `linear-gradient(145deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02))`
+          : "rgba(255,255,255,0.025)",
+        border: `1px solid ${hovered ? "rgba(201,168,76,0.25)" : "rgba(255,255,255,0.06)"}`,
+        borderRadius: "16px",
+        padding: "32px 28px",
+        position: "relative",
+        overflow: "hidden",
+        cursor: "default",
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? `translateY(0) scale(1)`
+          : `translateY(40px) scale(0.95)`,
+        transition: `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, border-color 0.3s, background 0.3s`,
+      }}
+    >
+      {/* Glow on hover */}
+      <div style={{
+        position: "absolute", top: "-50%", right: "-50%",
+        width: "200px", height: "200px",
+        borderRadius: "50%",
+        background: `radial-gradient(circle, rgba(201,168,76,${hovered ? 0.1 : 0}) 0%, transparent 70%)`,
+        transition: "all 0.5s",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{
+        width: "48px", height: "48px", borderRadius: "12px",
+        background: hovered ? COLORS.goldMuted : "rgba(255,255,255,0.04)",
+        border: `1px solid ${hovered ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.08)"}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "22px", marginBottom: "20px",
+        transition: "all 0.4s",
+        transform: hovered ? "scale(1.1) rotate(-5deg)" : "scale(1) rotate(0)",
+      }}>
+        {icon}
+      </div>
+
+      <h3 style={{
+        fontSize: "17px", fontWeight: 700, color: COLORS.starWhite,
+        margin: "0 0 10px", letterSpacing: "-0.01em",
+      }}>
+        {title}
+      </h3>
+      <p style={{
+        fontSize: "14px", color: COLORS.dim, lineHeight: 1.7, margin: 0,
+      }}>
+        {desc}
+      </p>
+
+      {/* Bottom accent line */}
+      <div style={{
+        position: "absolute", bottom: 0, left: "28px", right: "28px",
+        height: "2px",
+        background: `linear-gradient(90deg, transparent, ${COLORS.gold}, transparent)`,
+        opacity: hovered ? 0.5 : 0,
+        transition: "opacity 0.4s",
+      }} />
+    </div>
+  );
+}
+
+// ─── Step Card (How it works) ──────────────────────────────────────────────
+function StepCard({ step, title, desc, delay }) {
+  const [ref, visible] = useReveal(0.15);
+
+  return (
+    <div ref={ref} style={{
+      textAlign: "center",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0) scale(1)" : "translateY(50px) scale(0.9)",
+      transition: `all 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`,
+    }}>
+      <div style={{
+        width: "72px", height: "72px", borderRadius: "50%",
+        background: `linear-gradient(135deg, ${COLORS.gold}22, ${COLORS.gold}08)`,
+        border: `2px solid ${COLORS.gold}33`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        margin: "0 auto 20px",
+        fontFamily: "'Instrument Serif', Georgia, serif",
+        fontSize: "28px", color: COLORS.gold, fontWeight: 400,
+      }}>
+        {step}
+      </div>
+      <h3 style={{
+        fontSize: "18px", fontWeight: 700, color: COLORS.starWhite,
+        margin: "0 0 8px",
+      }}>{title}</h3>
+      <p style={{
+        fontSize: "14px", color: COLORS.dim, lineHeight: 1.7,
+        maxWidth: "280px", margin: "0 auto",
+      }}>{desc}</p>
+    </div>
+  );
+}
+
+// ─── Constellation Connector Lines ─────────────────────────────────────────
+function ConstellationLine() {
+  const [ref, visible] = useReveal();
+  return (
+    <div ref={ref} style={{
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "0 20px",
+    }}>
+      <svg width="80" height="4" viewBox="0 0 80 4" style={{
+        opacity: visible ? 0.3 : 0,
+        transition: "opacity 1s ease 0.3s",
+      }}>
+        <line x1="0" y1="2" x2="80" y2="2" stroke={COLORS.gold} strokeWidth="1" strokeDasharray="4 4">
+          <animate attributeName="stroke-dashoffset" from="8" to="0" dur="2s" repeatCount="indefinite" />
+        </line>
+        <circle cx="0" cy="2" r="2" fill={COLORS.gold} opacity="0.6" />
+        <circle cx="80" cy="2" r="2" fill={COLORS.gold} opacity="0.6" />
+      </svg>
+    </div>
+  );
+}
+
+// ─── Testimonial / Social Proof ────────────────────────────────────────────
+function StatBlock({ value, label, suffix = "" }) {
+  const [ref, visible] = useReveal();
+  return (
+    <div ref={ref} style={{
+      textAlign: "center",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(20px)",
+      transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+    }}>
+      <div style={{
+        fontFamily: "'Instrument Serif', Georgia, serif",
+        fontSize: "clamp(2.5rem, 5vw, 3.5rem)",
+        color: COLORS.gold, fontWeight: 400,
+        lineHeight: 1,
+      }}>
+        <Counter end={value} suffix={suffix} />
+      </div>
+      <div style={{
+        fontSize: "13px", color: COLORS.dim, marginTop: "8px",
+        textTransform: "uppercase", letterSpacing: "0.1em",
+      }}>{label}</div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ─── MAIN APP ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+export default function CobbyIQStellar() {
+  const [scrollY, setScrollY] = useState(0);
+  const [navSolid, setNavSolid] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrollY(window.scrollY);
+      setNavSolid(window.scrollY > 60);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const features = [
+    { icon: "✦", title: "RAG-Powered Answers", desc: "Every response is grounded in your actual documents. No hallucinations, no guessing — just accurate knowledge from your own files." },
+    { icon: "◈", title: "Smart Categorization", desc: "Documents auto-organize into departments, topics, and workflows. Find anything in seconds, not hours." },
+    { icon: "◎", title: "Knowledge Gap Detection", desc: "CobbyIQ identifies what your team asks about but can't find — surfacing exactly where your docs fall short." },
+    { icon: "◆", title: "Stale Doc Alerts", desc: "Policies from 2022 still circulating? Get notified when documents need review so your knowledge stays current." },
+    { icon: "◇", title: "Role-Based Access", desc: "Admins control what's shared. Employees see what they need. Clean, secure, zero confusion." },
+    { icon: "○", title: "10-Minute Setup", desc: "Upload your docs, invite your team, done. No IT projects, no consultants, no six-month rollout." },
+  ];
+
+  return (
+    <div style={{
+      fontFamily: "'Sora', 'Segoe UI', system-ui, sans-serif",
+      background: `linear-gradient(180deg, ${COLORS.void} 0%, ${COLORS.deep} 30%, ${COLORS.nebula} 60%, ${COLORS.deep} 100%)`,
+      color: COLORS.starWhite,
+      minHeight: "100vh",
+      overflow: "hidden",
+      position: "relative",
+    }}>
+      <StarField />
+
+      {/* ── Nebula Gradients ── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        <Orb size="600px" top="-10%" left="-10%" delay={0} />
+        <Orb size="500px" top="40%" left="75%" delay={2} color={COLORS.accent} />
+        <Orb size="700px" top="70%" left="20%" delay={4} />
+      </div>
+
+      {/* ── NAV ── */}
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        padding: "0 32px", height: "64px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: navSolid ? `${COLORS.void}ee` : "transparent",
+        backdropFilter: navSolid ? "blur(20px) saturate(1.5)" : "none",
+        borderBottom: navSolid ? "1px solid rgba(201,168,76,0.08)" : "1px solid transparent",
+        transition: "all 0.4s",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <HexLogo size={28} />
+          <span style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: "20px", fontWeight: 400,
+          }}>
+            Cobby<span style={{ color: COLORS.gold }}>IQ</span>
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+          {[
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Pricing", href: "#pricing" },
+].map(link => (
+  <a key={link.label} href={link.href} style={{
+    color: COLORS.dim, textDecoration: "none", fontSize: "14px",
+    transition: "color 0.2s",
+  }}
+    onMouseEnter={e => e.currentTarget.style.color = COLORS.starWhite}
+    onMouseLeave={e => e.currentTarget.style.color = COLORS.dim}
+  >{link.label}</a>
+))}
+          <Link href="/register">
+            <button style={{
+              background: COLORS.gold, color: COLORS.deep,
+              border: "none", borderRadius: "8px",
+              padding: "8px 20px", fontSize: "14px", fontWeight: 700,
+              cursor: "pointer", transition: "all 0.2s",
+              boxShadow: "0 0 20px rgba(201,168,76,0.2)",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = COLORS.goldLight; e.currentTarget.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = COLORS.gold; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              Get started
+            </button>
+          </Link>
+        </div>
+      </nav>
+
+      <div style={{ position: "relative", zIndex: 1 }}>
+
+        {/* ═══ HERO ═══ */}
+        <section style={{
+          minHeight: "100vh", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: "120px 24px 80px", textAlign: "center",
+          position: "relative",
+        }}>
+          {/* Animated badge */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            background: "rgba(201,168,76,0.08)",
+            border: "1px solid rgba(201,168,76,0.2)",
+            borderRadius: "100px", padding: "6px 18px", marginBottom: "32px",
+            fontSize: "12px", color: COLORS.gold,
+            letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 600,
+            animation: "fadeInDown 0.8s ease-out",
+          }}>
+            <span style={{
+              width: "6px", height: "6px", borderRadius: "50%",
+              background: COLORS.gold,
+              boxShadow: `0 0 8px ${COLORS.gold}`,
+              animation: "pulse 2s infinite",
+            }} />
+            AI-Powered Knowledge Management
+          </div>
+
+          <h1 style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: "clamp(3rem, 7vw, 5.5rem)",
+            fontWeight: 400, lineHeight: 1.05,
+            margin: "0 0 24px",
+            maxWidth: "900px",
+            animation: "fadeInUp 1s ease-out 0.2s both",
+          }}>
+            Your company's
+            <br />
+            <span style={{
+              background: `linear-gradient(135deg, ${COLORS.gold}, ${COLORS.goldLight}, ${COLORS.gold})`,
+              backgroundSize: "200% 200%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              animation: "shimmer 3s ease-in-out infinite",
+            }}>
+              knowledge, unlocked.
+            </span>
+          </h1>
+
+          <p style={{
+            fontSize: "clamp(1rem, 2vw, 1.2rem)",
+            color: COLORS.dim, lineHeight: 1.8,
+            maxWidth: "560px", margin: "0 auto 40px",
+            animation: "fadeInUp 1s ease-out 0.4s both",
+          }}>
+            CobbyIQ replaces the Knowledge Manager you can't afford to hire.
+            Your docs become an AI brain that every employee can query — instantly.
+          </p>
+
+          <div style={{
+            display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap",
+            animation: "fadeInUp 1s ease-out 0.6s both",
+          }}>
+            <Link href="/register">
+              <button style={{
+                background: `linear-gradient(135deg, ${COLORS.gold}, ${COLORS.goldLight})`,
+                color: COLORS.deep, border: "none",
+                borderRadius: "12px", padding: "14px 32px",
+                fontSize: "15px", fontWeight: 700, cursor: "pointer",
+                transition: "all 0.3s",
+                boxShadow: `0 4px 30px rgba(201,168,76,0.3), 0 0 60px rgba(201,168,76,0.1)`,
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px) scale(1.02)"; e.currentTarget.style.boxShadow = `0 8px 40px rgba(201,168,76,0.4)`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0) scale(1)"; e.currentTarget.style.boxShadow = `0 4px 30px rgba(201,168,76,0.3)`; }}
+              >
+                Start for free →
+              </button>
+            </Link>
+            <button style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: COLORS.starWhite,
+              borderRadius: "12px", padding: "14px 32px",
+              fontSize: "15px", fontWeight: 500, cursor: "pointer",
+              transition: "all 0.3s",
+              backdropFilter: "blur(10px)",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              Watch demo
+            </button>
+          </div>
+
+          <p style={{
+            fontSize: "12px", color: COLORS.faint, marginTop: "20px",
+            animation: "fadeInUp 1s ease-out 0.8s both",
+          }}>
+            No credit card required · Setup in under 10 minutes · Free for early teams
+          </p>
+
+          {/* Scroll indicator */}
+          <div style={{
+            position: "absolute", bottom: "32px", left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex", flexDirection: "column", alignItems: "center",
+            gap: "8px", color: COLORS.faint,
+            animation: "bounce 2.5s infinite",
+          }}>
+            <span style={{ fontSize: "11px", letterSpacing: "0.15em" }}>EXPLORE</span>
+            <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
+              <rect x="5" y="0" width="6" height="16" rx="3" stroke={COLORS.faint} strokeWidth="1.5" fill="none" />
+              <circle cx="8" cy="6" r="1.5" fill={COLORS.gold}>
+                <animate attributeName="cy" values="5;10;5" dur="1.5s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+        </section>
+
+        {/* ═══ PRODUCT SHOWCASE ═══ */}
+        <section style={{ padding: "40px 24px 120px", position: "relative" }}>
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: "48px" }}>
+              <div style={{
+                fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase",
+                color: COLORS.gold, fontWeight: 600, marginBottom: "12px",
+              }}>
+                See it in action
+              </div>
+              <h2 style={{
+                fontFamily: "'Instrument Serif', Georgia, serif",
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 400, margin: 0, color: COLORS.starWhite,
+              }}>
+                Answers in seconds, not days
+              </h2>
+            </div>
+            <ProductShowcase />
+          </div>
+        </section>
+
+        {/* ═══ STATS BAR ═══ */}
+        <section style={{
+          padding: "60px 24px",
+          borderTop: "1px solid rgba(201,168,76,0.08)",
+          borderBottom: "1px solid rgba(201,168,76,0.08)",
+          background: "rgba(0,0,0,0.2)",
+        }}>
+          <div style={{
+            maxWidth: "800px", margin: "0 auto",
+            display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "40px",
+          }}>
+            <StatBlock value={90} suffix="%" label="Faster onboarding" />
+            <StatBlock value={500} suffix="+" label="Documents supported" />
+            <StatBlock value={10} suffix=" min" label="Setup time" />
+          </div>
+        </section>
+
+        {/* ═══ HOW IT WORKS ═══ */}
+        <section id="how-it-works" style={{ padding: "120px 24px", position: "relative" }}>
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: "64px" }}>
+              <div style={{
+                fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase",
+                color: COLORS.gold, fontWeight: 600, marginBottom: "12px",
+              }}>
+                How it works
+              </div>
+              <h2 style={{
+                fontFamily: "'Instrument Serif', Georgia, serif",
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 400, margin: 0,
+              }}>
+                Three steps to stellar knowledge
+              </h2>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr auto 1fr",
+              alignItems: "flex-start",
+              gap: "0",
+            }}>
+              <StepCard step="1" title="Upload your docs" desc="PDFs, policies, handbooks — CobbyIQ ingests and indexes everything automatically." delay={0} />
+              <ConstellationLine />
+              <StepCard step="2" title="AI builds the brain" desc="Our RAG pipeline transforms documents into a searchable, context-aware knowledge galaxy." delay={0.15} />
+              <ConstellationLine />
+              <StepCard step="3" title="Team asks away" desc="Employees get instant, accurate answers sourced directly from your company knowledge." delay={0.3} />
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ FEATURES ═══ */}
+        <section id="features" style={{
+          padding: "100px 24px 120px",
+          position: "relative",
+        }}>
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "1px",
+            background: `linear-gradient(90deg, transparent, ${COLORS.gold}33, transparent)`,
+          }} />
+
+          <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: "64px" }}>
+              <div style={{
+                fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase",
+                color: COLORS.gold, fontWeight: 600, marginBottom: "12px",
+              }}>
+                Features
+              </div>
+              <h2 style={{
+                fontFamily: "'Instrument Serif', Georgia, serif",
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 400, margin: "0 0 16px",
+              }}>
+                Everything your team needs to thrive
+              </h2>
+              <p style={{
+                fontSize: "15px", color: COLORS.dim, maxWidth: "500px",
+                margin: "0 auto", lineHeight: 1.7,
+              }}>
+                Built for companies with 20–150 employees who need enterprise-grade
+                knowledge management without enterprise complexity.
+              </p>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "20px",
+            }}>
+              {features.map((f, i) => (
+                <FeatureCard key={f.title} {...f} index={i} delay={i * 0.08} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ CTA ═══ */}
+        <section id="pricing" style={{
+          padding: "120px 24px",
+          textAlign: "center",
+          position: "relative",
+        }}>
+          {/* Radial glow */}
+          <div style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "600px", height: "600px", borderRadius: "50%",
+            background: `radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%)`,
+            pointerEvents: "none",
+            animation: "orbFloat 6s ease-in-out infinite alternate",
+          }} />
+
+          <div style={{ position: "relative", maxWidth: "650px", margin: "0 auto" }}>
+            <HexLogo size={48} />
+            <h2 style={{
+              fontFamily: "'Instrument Serif', Georgia, serif",
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              fontWeight: 400, margin: "24px 0 16px", lineHeight: 1.1,
+            }}>
+              Ready to launch your
+              <br />
+              <span style={{ color: COLORS.gold }}>knowledge into orbit?</span>
+            </h2>
+            <p style={{
+              color: COLORS.dim, fontSize: "16px", lineHeight: 1.7,
+              marginBottom: "36px",
+            }}>
+              Join forward-thinking teams using CobbyIQ to onboard faster,
+              retain knowledge, and empower every employee.
+            </p>
+            <Link href="/register">
+              <button style={{
+                background: `linear-gradient(135deg, ${COLORS.gold}, ${COLORS.goldLight})`,
+                color: COLORS.deep, border: "none",
+                borderRadius: "12px", padding: "16px 40px",
+                fontSize: "16px", fontWeight: 700, cursor: "pointer",
+                transition: "all 0.3s",
+                boxShadow: `0 4px 40px rgba(201,168,76,0.35), 0 0 80px rgba(201,168,76,0.1)`,
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px) scale(1.03)"; e.currentTarget.style.boxShadow = `0 8px 50px rgba(201,168,76,0.5)`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0) scale(1)"; e.currentTarget.style.boxShadow = `0 4px 40px rgba(201,168,76,0.35)`; }}
+              >
+                Get started for free →
+              </button>
+            </Link>
+            <p style={{ fontSize: "12px", color: COLORS.faint, marginTop: "16px" }}>
+              No credit card · Free for early adopters
+            </p>
+          </div>
+        </section>
+
+        {/* ═══ FOOTER ═══ */}
+        <footer style={{
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "32px 24px",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: "12px",
+          color: COLORS.faint, fontSize: "13px",
+        }}>
+          <HexLogo size={18} />
+          <span>© 2026 CobbyIQ · Intelligent Knowledge Management</span>
+        </footer>
+      </div>
+
+      {/* ── Global Animations ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Sora:wght@300;400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shimmer {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px ${COLORS.gold}; }
+          50% { opacity: 0.5; box-shadow: 0 0 16px ${COLORS.gold}; }
+        }
+
+        @keyframes orbFloat {
+          0% { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(30px, -40px) scale(1.1); }
+        }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        html { scroll-behavior: smooth; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: ${COLORS.void}; }
+        ::-webkit-scrollbar-thumb { background: ${COLORS.gold}44; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${COLORS.gold}88; }
+      `}</style>
+    </div>
+  );
 }
