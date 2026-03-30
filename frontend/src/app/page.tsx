@@ -521,7 +521,7 @@ function ConstellationLine() {
   );
 }
 
-// ─── Testimonial / Social Proof ────────────────────────────────────────────
+// ─── Stat Block ────────────────────────────────────────────────────────────
 function StatBlock({ value, label, suffix = "" }) {
   const [ref, visible] = useReveal();
   return (
@@ -541,7 +541,7 @@ function StatBlock({ value, label, suffix = "" }) {
       </div>
       <div style={{
         fontSize: "13px", color: COLORS.dim, marginTop: "8px",
-        textTransform: "uppercase", letterSpacing: "0.1em",
+        lineHeight: 1.5,
       }}>{label}</div>
     </div>
   );
@@ -564,12 +564,12 @@ export default function CobbyIQStellar() {
   }, []);
 
   const features = [
-    { icon: "✦", title: "RAG-Powered Answers", desc: "Every response is grounded in your actual documents. No hallucinations, no guessing — just accurate knowledge from your own files." },
-    { icon: "◈", title: "Smart Categorization", desc: "Documents auto-organize into departments, topics, and workflows. Find anything in seconds, not hours." },
-    { icon: "◎", title: "Knowledge Gap Detection", desc: "CobbyIQ identifies what your team asks about but can't find — surfacing exactly where your docs fall short." },
-    { icon: "◆", title: "Stale Doc Alerts", desc: "Policies from 2022 still circulating? Get notified when documents need review so your knowledge stays current." },
-    { icon: "◇", title: "Role-Based Access", desc: "Admins control what's shared. Employees see what they need. Clean, secure, zero confusion." },
-    { icon: "○", title: "10-Minute Setup", desc: "Upload your docs, invite your team, done. No IT projects, no consultants, no six-month rollout." },
+    { icon: "✦", title: "Answers from your docs, not the internet", desc: "Every response is grounded in your actual documents. No hallucinations, no guessing — just accurate knowledge from your own files, with page references." },
+    { icon: "◈", title: "Find anything in seconds", desc: "Stop digging through Google Drive folders. Ask a question in plain English, get the answer instantly — no matter which document it's buried in." },
+    { icon: "◎", title: "See what's missing from your docs", desc: "CobbyIQ tracks what your team asks but can't find — showing you exactly where to improve your knowledge base." },
+    { icon: "◆", title: "Know when docs need updating", desc: "Policies from 2022 still circulating? Get alerted when documents go stale so your knowledge stays current and trustworthy." },
+    { icon: "◇", title: "HR controls what's shared", desc: "Admins decide what's visible. Employees see what they need. Clean, secure, zero confusion about who has access to what." },
+    { icon: "○", title: "Upload and go — no IT project", desc: "Drag in your PDFs, Word docs, and handbooks. CobbyIQ handles the rest. You're live in 10 minutes, not 10 weeks." },
   ];
 
   return (
@@ -611,18 +611,18 @@ export default function CobbyIQStellar() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
           {[
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-].map(link => (
-  <a key={link.label} href={link.href} style={{
-    color: COLORS.dim, textDecoration: "none", fontSize: "14px",
-    transition: "color 0.2s",
-  }}
-    onMouseEnter={e => e.currentTarget.style.color = COLORS.starWhite}
-    onMouseLeave={e => e.currentTarget.style.color = COLORS.dim}
-  >{link.label}</a>
-))}
+            { label: "Features", href: "#features" },
+            { label: "How it works", href: "#how-it-works" },
+            { label: "Pricing", href: "#pricing" },
+          ].map(link => (
+            <a key={link.label} href={link.href} style={{
+              color: COLORS.dim, textDecoration: "none", fontSize: "14px",
+              transition: "color 0.2s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = COLORS.starWhite}
+              onMouseLeave={e => e.currentTarget.style.color = COLORS.dim}
+            >{link.label}</a>
+          ))}
           <Link href="/register">
             <button style={{
               background: COLORS.gold, color: COLORS.deep,
@@ -634,7 +634,7 @@ export default function CobbyIQStellar() {
               onMouseEnter={e => { e.currentTarget.style.background = COLORS.goldLight; e.currentTarget.style.transform = "translateY(-1px)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = COLORS.gold; e.currentTarget.style.transform = "translateY(0)"; }}
             >
-              Get started
+              Try it free
             </button>
           </Link>
         </div>
@@ -665,18 +665,18 @@ export default function CobbyIQStellar() {
               boxShadow: `0 0 8px ${COLORS.gold}`,
               animation: "pulse 2s infinite",
             }} />
-            AI-Powered Knowledge Management
+            Built for teams of 20–150
           </div>
 
           <h1 style={{
             fontFamily: "'Instrument Serif', Georgia, serif",
-            fontSize: "clamp(3rem, 7vw, 5.5rem)",
-            fontWeight: 400, lineHeight: 1.05,
+            fontSize: "clamp(2.8rem, 6.5vw, 5rem)",
+            fontWeight: 400, lineHeight: 1.1,
             margin: "0 0 24px",
             maxWidth: "900px",
             animation: "fadeInUp 1s ease-out 0.2s both",
           }}>
-            Your company's
+            Your team keeps asking the
             <br />
             <span style={{
               background: `linear-gradient(135deg, ${COLORS.gold}, ${COLORS.goldLight}, ${COLORS.gold})`,
@@ -685,18 +685,21 @@ export default function CobbyIQStellar() {
               WebkitTextFillColor: "transparent",
               animation: "shimmer 3s ease-in-out infinite",
             }}>
-              knowledge, unlocked.
+              same questions.
             </span>
+            <br />
+            Let your docs answer them.
           </h1>
 
           <p style={{
-            fontSize: "clamp(1rem, 2vw, 1.2rem)",
+            fontSize: "clamp(1rem, 2vw, 1.15rem)",
             color: COLORS.dim, lineHeight: 1.8,
-            maxWidth: "560px", margin: "0 auto 40px",
+            maxWidth: "580px", margin: "0 auto 40px",
             animation: "fadeInUp 1s ease-out 0.4s both",
           }}>
-            CobbyIQ replaces the Knowledge Manager you can't afford to hire.
-            Your docs become an AI brain that every employee can query — instantly.
+            New hires ask where the PTO policy is. Engineers ask how to submit expenses.
+            Managers answer the same things every week — even though it&apos;s all written down somewhere.
+            CobbyIQ turns your existing docs into an AI teammate that answers instantly, accurately, with sources.
           </p>
 
           <div style={{
@@ -715,7 +718,7 @@ export default function CobbyIQStellar() {
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px) scale(1.02)"; e.currentTarget.style.boxShadow = `0 8px 40px rgba(201,168,76,0.4)`; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0) scale(1)"; e.currentTarget.style.boxShadow = `0 4px 30px rgba(201,168,76,0.3)`; }}
               >
-                Start for free →
+                Try it free
               </button>
             </Link>
             <button style={{
@@ -738,7 +741,7 @@ export default function CobbyIQStellar() {
             fontSize: "12px", color: COLORS.faint, marginTop: "20px",
             animation: "fadeInUp 1s ease-out 0.8s both",
           }}>
-            No credit card required · Setup in under 10 minutes · Free for early teams
+            No credit card · Works in 10 minutes · Free for early teams
           </p>
 
           {/* Scroll indicator */}
@@ -767,7 +770,7 @@ export default function CobbyIQStellar() {
                 fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase",
                 color: COLORS.gold, fontWeight: 600, marginBottom: "12px",
               }}>
-                See it in action
+                Watch it answer in real time
               </div>
               <h2 style={{
                 fontFamily: "'Instrument Serif', Georgia, serif",
@@ -792,9 +795,9 @@ export default function CobbyIQStellar() {
             maxWidth: "800px", margin: "0 auto",
             display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "40px",
           }}>
-            <StatBlock value={90} suffix="%" label="Faster onboarding" />
-            <StatBlock value={500} suffix="+" label="Documents supported" />
-            <StatBlock value={10} suffix=" min" label="Setup time" />
+            <StatBlock value={4} suffix="+ hrs/week" label="spent answering questions already in your docs" />
+            <StatBlock value={50} suffix=" questions" label="the average new hire asks in their first month" />
+            <StatBlock value={10} suffix=" minutes" label="to set up CobbyIQ and stop repeating yourself" />
           </div>
         </section>
 
@@ -813,7 +816,7 @@ export default function CobbyIQStellar() {
                 fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
                 fontWeight: 400, margin: 0,
               }}>
-                Three steps to stellar knowledge
+                Three steps. Ten minutes. Done.
               </h2>
             </div>
 
@@ -823,11 +826,11 @@ export default function CobbyIQStellar() {
               alignItems: "flex-start",
               gap: "0",
             }}>
-              <StepCard step="1" title="Upload your docs" desc="PDFs, policies, handbooks — CobbyIQ ingests and indexes everything automatically." delay={0} />
+              <StepCard step="1" title="Upload your docs" desc="Drag in your handbook, policies, SOPs — PDF, Word, whatever you've got." delay={0} />
               <ConstellationLine />
-              <StepCard step="2" title="AI builds the brain" desc="Our RAG pipeline transforms documents into a searchable, context-aware knowledge galaxy." delay={0.15} />
+              <StepCard step="2" title="AI reads everything" desc="CobbyIQ indexes every page and builds a searchable knowledge brain for your company." delay={0.15} />
               <ConstellationLine />
-              <StepCard step="3" title="Team asks away" desc="Employees get instant, accurate answers sourced directly from your company knowledge." delay={0.3} />
+              <StepCard step="3" title="Team asks, AI answers" desc="Any employee can ask questions in plain English and get accurate answers with page references." delay={0.3} />
             </div>
           </div>
         </section>
@@ -856,14 +859,15 @@ export default function CobbyIQStellar() {
                 fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
                 fontWeight: 400, margin: "0 0 16px",
               }}>
-                Everything your team needs to thrive
+                The Knowledge Manager you can&apos;t afford to hire
               </h2>
               <p style={{
-                fontSize: "15px", color: COLORS.dim, maxWidth: "500px",
+                fontSize: "15px", color: COLORS.dim, maxWidth: "520px",
                 margin: "0 auto", lineHeight: 1.7,
               }}>
-                Built for companies with 20–150 employees who need enterprise-grade
-                knowledge management without enterprise complexity.
+                CobbyIQ does what a Knowledge Manager would — organizes your docs,
+                answers your team&apos;s questions, and tells you where the gaps are.
+                Without the $80k salary.
               </p>
             </div>
 
@@ -902,16 +906,17 @@ export default function CobbyIQStellar() {
               fontSize: "clamp(2rem, 5vw, 3.5rem)",
               fontWeight: 400, margin: "24px 0 16px", lineHeight: 1.1,
             }}>
-              Ready to launch your
+              Stop answering the
               <br />
-              <span style={{ color: COLORS.gold }}>knowledge into orbit?</span>
+              <span style={{ color: COLORS.gold }}>same questions.</span>
             </h2>
             <p style={{
               color: COLORS.dim, fontSize: "16px", lineHeight: 1.7,
               marginBottom: "36px",
             }}>
-              Join forward-thinking teams using CobbyIQ to onboard faster,
-              retain knowledge, and empower every employee.
+              Free for early teams. Set up in 10 minutes.
+              <br />
+              Your docs become your smartest teammate.
             </p>
             <Link href="/register">
               <button style={{
@@ -925,11 +930,11 @@ export default function CobbyIQStellar() {
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px) scale(1.03)"; e.currentTarget.style.boxShadow = `0 8px 50px rgba(201,168,76,0.5)`; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0) scale(1)"; e.currentTarget.style.boxShadow = `0 4px 40px rgba(201,168,76,0.35)`; }}
               >
-                Get started for free →
+                Try it free
               </button>
             </Link>
             <p style={{ fontSize: "12px", color: COLORS.faint, marginTop: "16px" }}>
-              No credit card · Free for early adopters
+              No credit card · No IT setup · Free for early adopters
             </p>
           </div>
         </section>
@@ -942,7 +947,7 @@ export default function CobbyIQStellar() {
           color: COLORS.faint, fontSize: "13px",
         }}>
           <HexLogo size={18} />
-          <span>© 2026 CobbyIQ · Intelligent Knowledge Management</span>
+          <span>© 2026 CobbyIQ · The Knowledge Manager for growing teams</span>
         </footer>
       </div>
 
