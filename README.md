@@ -12,7 +12,7 @@
 [![LangChain](https://img.shields.io/badge/LangChain-0.2-1C3C3C?style=flat-square)](https://langchain.com)
 [![Voyage AI](https://img.shields.io/badge/Voyage_AI-voyage--3-5B4CF5?style=flat-square)](https://voyageai.com)
 
-**[Live Demo →](https://cobbyiq.vercel.app)** · **[API Docs →](https://api.cobbyiq.dev/docs)**
+**[Live Demo →](https://cobbyiq.com)** · **[API Docs →](https://cobbyiq.com/docs)**
 
 </div>
 
@@ -186,7 +186,7 @@ cobbyiq/
 | `GET` | `/analytics/overview` | HR | Usage metrics |
 | `GET` | `/analytics/gaps` | HR | Unanswered / low-confidence questions |
 
-Full interactive docs: `http://localhost:8000/docs`
+Full interactive docs: `http://localhost:8000/docs` · Production: `https://cobbyiq.com/docs`
 
 ---
 
@@ -222,5 +222,3 @@ npm run dev
 ## Built By
 
 Solo project. FastAPI backend, Next.js frontend, full RAG pipeline, multi-tenant auth, and analytics — end to end.
-
-Questions: [your@email.com](mailto:your@email.com) · [LinkedIn](https://linkedin.com) · [Portfolio](https://yoursite.dev)
